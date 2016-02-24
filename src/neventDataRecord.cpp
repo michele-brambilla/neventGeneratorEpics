@@ -57,7 +57,7 @@ neventDataRecord::shared_pointer neventDataRecord::create(const std::string &rec
 	
     if (pvRecord && !pvRecord->init())
 	        pvRecord.reset();
-        
+
     return pvRecord;    
 }
 
@@ -91,9 +91,28 @@ bool neventDataRecord::init()
   return true;
 }
 
-void neventDataRecord::update(char* filename)
-{
+void neventDataRecord::update(char* filename) {
+
   prod->GenerateEvents(filename);
+  std::cout << "eventID = " << eventID
+            << "generatorID = " << *(prod->getID())
+            << std::endl;
+
+  if(eventID % 140 == 0) {
+
+    oldID = *(prod->getID());
+
+    if( oldID - eventID > 0) {
+      std::cout << "Lost " << oldID - eventID
+                << " events"<< std::endl;
+
+      // reset counter
+      eventID = 0;
+      *(prod->getID()) = 0;
+    }
+  }
+  ++eventID;
+
   
   // Need to put queued events into arrays
   PVLongArray::svector id_data;

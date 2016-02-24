@@ -4,7 +4,7 @@ include $(TOP)/configure/CONFIG
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 
-CXXFLAGS = -Wall -std=c++11 -I$(EPICS_BASE)/include -I$(EPICS_BASE)/include/compiler/clang -I$(EPICS_BASE)/include/os/Darwin
+CXXFLAGS = -Wall -std=c++11 -I$(EPICS_BASE)/include -I$(EPICS_BASE)/include/compiler/clang -I$(EPICS_BASE)/include/os/Darwin -O3 
 
 SHRLIB_SEARCH_DIRS += /usr/local/lib $(EPICS_BASE)/lib/$(EPICS_HOST_ARCH) $(HOME)/work/neventGeneratorEpics/lib/$(EPICS_HOST_ARCH)
 
@@ -33,6 +33,7 @@ neventGeneratorEpics_LIBS += pvAccess
 neventGeneratorEpics_LIBS += pvData
 neventGeneratorEpics_LIBS += Com
 neventGeneratorEpics_LIBS += NeXus
+
 
 
 #===========================

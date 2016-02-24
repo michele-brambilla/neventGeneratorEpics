@@ -1,7 +1,11 @@
 #ifndef NEVENT_H
 #define NEVENT_H
 
+#include <chrono>
+#include <thread>
+
 #include <stdint.h>
+
 #include "neventArray.h"
 
 

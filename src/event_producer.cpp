@@ -5,30 +5,32 @@
 
 #include "event_producer.h"
 
-EventProducer::EventProducer(const double& mult) : multiplier(mult) { }
+EventProducer::EventProducer(const double& mult) : multiplier(mult), eID(0) { }
 
 void EventProducer::GenerateEvents(char* filename) {
   static int c = 1;
   if(c) {
     c--;
     nEventData = loadNeXus2Events(filename);
+    count = nEventData->count;
   }
-  count = nEventData->count;
+  
 }
 
 nevent EventProducer::GetEvent(const int eventId) {
-  //  count = eventId;
   struct nevent ev;
   ev.detectorID = nEventData->detectorID[eventId];
   ev.timeStamp = nEventData->timeStamp[eventId];
-  // std::cout << eventId << " : "
-  //           << "( "  << ev.detectorID
-  //           << " , " << ev.timeStamp
-  //           << " )" << std::endl;
   return ev;
 }
 
-unsigned int EventProducer::GetEventCount()
-{
-  return count;
+unsigned int EventProducer::GetEventCount() { return count; }
+
+
+void keep_pulling(EventProducer* prod) {
+  while(true) {
+    std::this_thread::sleep_for(std::chrono::milliseconds((int)round(1000./frequency)));    
+    //    std::cout << (prod->next()) << std::endl;
+    prod->next();
+  }
 }

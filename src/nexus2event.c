@@ -75,7 +75,7 @@ static pNEventArray loadAMOR(char *filename)
   if(evData == NULL){
     return NULL;
   }
-  printf("%s contains %ld neutrons\n",filename,nEvents);
+  /* printf("%s contains %ld neutrons\n",filename,nEvents); */
 
   nEvents = 0;
   for(i = 0; i < dim[0]; i++){
@@ -308,14 +308,14 @@ pNEventArray loadNeXus2Events(char *filename)
   printf("%s\n",filename);
 
   if(strstr(filename,"amor") != NULL){
-    printf("loadAMOR\n");
+    /* printf("loadAMOR\n"); */
     nxData = loadAMOR(filename);
   }
   /////////////////
   // hack
   else {
     if(strstr(filename,"focus") != NULL) {
-      printf("loadFOCUS\n");
+      /* printf("loadFOCUS\n"); */
       nxData = loadFOCUS(filename);
     }
     else
