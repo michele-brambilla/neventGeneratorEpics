@@ -103,13 +103,12 @@ static pNEventArray loadFOCUS(char *filename)
 {
   NXhandle handle;
   int32_t dim[2+1];
-  int status, i, j, k, l, nCount, rank, type;
+  int status, i, j, l, nCount, rank, type;
   unsigned int size, offset;
   int32_t *data = NULL;
   float *tof = NULL;
   int32_t *tof_monitor = NULL;
   int32_t iTof;
-  int32_t mTof;
   unsigned long nEvents;
   pNEventArray evData = NULL;
   unsigned int detID = -1;

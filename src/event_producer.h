@@ -5,11 +5,13 @@
 #include <random>
 #include <string>
 #include <iostream>
+#include <mutex>
+
 
 #include "nevent.h"
 #include "nexus2event.h"
 
-static const double frequency = 10;
+static const double frequency = 14.;
 
 struct EventProducer {
   EventProducer(const double&);
@@ -19,7 +21,10 @@ struct EventProducer {
 
   nevent GetEvent(const int);
   unsigned int GetEventCount();
-  const pNEventArray get_ptr() { return nEventData; };
+  const pNEventArray get_ptr() { return nEventData; }
+  const int64_t* id() { return nEventData->detectorID; }
+  const int32_t* ts() { return nEventData->timeStamp; }
+  
   unsigned int* getID() { return &eID; }
   
 private:
@@ -27,6 +32,10 @@ private:
   unsigned int count;
   unsigned int eID;
   pNEventArray nEventData;
+
+  std::once_flag nEventData_flag;
+
+  void GenerateEvents_impl(char*);
 };
 
 
