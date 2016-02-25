@@ -43,9 +43,14 @@ int main(int argc,char *argv[]) {
   std::thread pull_event(keep_pulling, ned->prod);
   pull_event.detach();
 
+  int pauseValue = (int)round(1000./frequency);
   while(true) {
-    std::this_thread::sleep_for(std::chrono::milliseconds((int)round(1000./frequency)));    
+    auto start = std::chrono::steady_clock::now();
     ned->update(argv[1]);         
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
+    
+    if( elapsed.count() < pauseValue)
+      std::this_thread::sleep_for(std::chrono::milliseconds(pauseValue - elapsed.count()));
   }
 
 
