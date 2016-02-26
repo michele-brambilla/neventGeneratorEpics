@@ -29,10 +29,6 @@ using namespace epics::pvAccess;
 using namespace epics::pvDatabase;
 using namespace epics::nevent;
 
-static const double multiplier = 1.;
-
-
-
 neventDataRecord::shared_pointer neventDataRecord::create(const std::string &recordName)
 {
     // Structure is:
@@ -65,7 +61,7 @@ neventDataRecord::shared_pointer neventDataRecord::create(const std::string &rec
 neventDataRecord::neventDataRecord(const std::string &recordName, const epics::pvData::PVStructurePtr &pvStructure)
   : epics::pvDatabase::PVRecord(recordName, pvStructure) {
     std::cout << "Constructor" << std::endl;
-    prod = new EventProducer(multiplier);
+    prod = new EventProducer;
 }
 
 
@@ -92,10 +88,8 @@ bool neventDataRecord::init() {
 void neventDataRecord::update(char* filename) {
 
   prod->GenerateEvents(filename);
-  std::cout << "eventID = " << eventID
-            << "generatorID = " << *(prod->getID())
-            << std::endl;
 
+#ifdef DEBUG
   if(eventID % 140 == 0) {
 
     oldID = *(prod->getID());
@@ -109,47 +103,18 @@ void neventDataRecord::update(char* filename) {
       *(prod->getID()) = 0;
     }
   }
+#endif
+  
   ++eventID;
-
   unsigned int size = prod->GetEventCount();
   
   // Need to put queued events into arrays
-  // PVLongArray::svector id_data;
-  // PVIntArray::svector ts_data;
   PVLongArray::svector id_data(size);
   PVIntArray::svector ts_data(size);
-
-  //  nDetectorId->setCapacity(size);
-  //  nTimeStamp->setCapacity(size);
-  //  memcpy(nDetectorId->getPtrSelf(),prod->get_ptr(),size*sizeof(int64_t));
-
-  struct nevent ev;
 
   std::copy(prod->id(), prod->id()+size, &id_data[0]);
   std::copy(prod->ts(), prod->ts()+size, &ts_data[0]);
 
-  // for (unsigned int i = 0; i < size; ++i) {
-  //   ev = prod->GetEvent(i);
-  //   // id_data.push_back(ev.detectorID);
-  //   // ts_data.push_back(ev.timeStamp);
-  //   id_data[i] = ev.detectorID;
-  //   ts_data[i] = ev.timeStamp;
-  // }
-
-  // ofstream of("ts_data.txt");
-  // for( auto i : ts_data ) {
-  //   of << i << ", ";
-  // }
-  // of << std::endl;
-  // of.close();
-  // of.open("id_data.txt");
-  // for( auto i : id_data ) {
-  //   of << i << ", ";
-  // }
-  // of << std::endl;
-  // of.close();
-  // std::cin >> ev.detectorID;
-  
   beginGroupPut();
   
   nCount->put(size);
@@ -157,8 +122,9 @@ void neventDataRecord::update(char* filename) {
   nTimeStamp->replace(freeze(ts_data));
   
   // EPICS timestamp updated last
-  timeStamp.getCurrent();
-  pvTimeStamp.set(timeStamp);
+  // timeStamp.getCurrent();
+  // pvTimeStamp.set(timeStamp);
+  pvTimeStamp.set(eventID);    // fills with "our" timestamp 
 
   endGroupPut();
   

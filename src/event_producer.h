@@ -11,10 +11,11 @@
 #include "nevent.h"
 #include "nexus2event.h"
 
-static const double frequency = 14.;
+static const double frequency = 14.; // Hz
 
 struct EventProducer {
-  EventProducer(const double&);
+
+  EventProducer();
   unsigned int next() { return (++eID);  }
 
   void GenerateEvents(char*);
@@ -26,9 +27,8 @@ struct EventProducer {
   const int32_t* ts() { return nEventData->timeStamp; }
   
   unsigned int* getID() { return &eID; }
-  
+  static unsigned int multiplier;
 private:
-  const double multiplier;
   unsigned int count;
   unsigned int eID;
   pNEventArray nEventData;
@@ -37,7 +37,6 @@ private:
 
   void GenerateEvents_impl(char*);
 };
-
 
 
 void keep_pulling(EventProducer*);

@@ -21,10 +21,21 @@ using namespace epics::pvAccess;
 using namespace epics::pvDatabase;
 using namespace epics::nevent;
 
+unsigned int to_num(char* in) {
+  stringstream ss(in);
+  unsigned int value;
+  ss >> value;
+  return value;
+}
+
 int main(int argc,char *argv[]) {
   PVDatabasePtr master = PVDatabase::getMaster();
   ChannelProviderLocalPtr channelProvider = getChannelProviderLocal();
-    
+
+  if(argc > 2) {
+    EventProducer::multiplier = to_num(argv[2]);
+  }
+  
   std::cout << "Creating PV(s)" << std::endl;
     
   neventDataRecord::shared_pointer ned = neventDataRecord::create("nevent1");
@@ -37,7 +48,6 @@ int main(int argc,char *argv[]) {
   PVStringArrayPtr pvNames = master->getRecordNames();
   cout << "Record Names:" << endl << *pvNames << endl;
   string str;
-
 
   
   std::thread pull_event(keep_pulling, ned->prod);

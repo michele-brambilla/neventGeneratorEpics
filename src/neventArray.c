@@ -3,6 +3,7 @@
  *
  * Mark Koennecke, June 2015
  */
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "neventArray.h"
@@ -47,17 +48,9 @@ void killNEventArray(pNEventArray *pself)
 pNEventArray multiplyNEventArray(pNEventArray source, unsigned int factor)
 {
   pNEventArray result;
-  int i;
-
   result = createNEventArray(source->count*factor);
   if(result == NULL){
     return NULL;
-  }
-  for(i = 0; i < factor; i++){
-    memcpy(result->detectorID + factor*source->count,
-	   source->detectorID, source->count*sizeof(int64_t));
-    memcpy(result->timeStamp + factor*source->count,
-	   source->timeStamp, source->count*sizeof(int32_t));
   }
   return result;
 }

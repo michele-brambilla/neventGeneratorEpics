@@ -5,23 +5,20 @@
 
 #include "event_producer.h"
 
-EventProducer::EventProducer(const double& mult) : multiplier(mult), eID(0) { }
+unsigned int EventProducer::multiplier = 1;
+
+EventProducer::EventProducer() : eID(0) { }
 
 void EventProducer::GenerateEvents(char* filename) {
   std::call_once(nEventData_flag,[&] {GenerateEvents_impl(filename);});
-  // static int c = 1;
-  // if(c) {
-  //   c--;
-  //   nEventData = loadNeXus2Events(filename);
-  //   count = nEventData->count;
-  // }  
 }
 
 void EventProducer::GenerateEvents_impl(char* filename) {
-
-    nEventData = loadNeXus2Events(filename);
-    count = nEventData->count;
-  
+  nEventData = loadNeXus2Events(filename);
+  if(multiplier > 1) {
+    nEventData = multiplyNEventArray(nEventData, multiplier);
+  }
+  count = nEventData->count;
 }
 
 nevent EventProducer::GetEvent(const int eventId) {

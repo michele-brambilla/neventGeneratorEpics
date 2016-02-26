@@ -15,8 +15,14 @@ typedef struct {
 } neventArray, *pNEventArray;
 
 
-pNEventArray createNEventArray(unsigned long count);
-void killNEventArray(pNEventArray *self);
-pNEventArray multiplyNEventArray(pNEventArray source, unsigned int factor);
+#ifdef __cplusplus
+extern "C" {
+#endif
+  pNEventArray createNEventArray(unsigned long count);
+  void killNEventArray(pNEventArray *self);
+  pNEventArray multiplyNEventArray(pNEventArray source, unsigned int factor);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
