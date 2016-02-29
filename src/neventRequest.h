@@ -44,4 +44,70 @@ public epics::pvAccess::ChannelRequester {
   void showDisconnectMessage(bool show = true);
 };
 
+
+
+
+
+
+class ChannelGetRequesterImpl : public epics::pvAccess::ChannelGetRequester
+{
+private:
+  epics::pvData::PVStructure::shared_pointer m_pvStructure;
+  epics::pvData::BitSet::shared_pointer m_bitSet;
+  epics::pvData::Mutex m_pointerMutex;
+  epics::pvData::Event m_event;
+  std::string m_channelName;
+
+  bool m_done;
+
+public:
+    
+  ChannelGetRequesterImpl(std::string);
+    
+  virtual std::string getRequesterName();
+
+  virtual void message(std::string const &, epics::pvData::MessageType);
+
+  virtual void channelGetConnect(const epics::pvData::Status&, epics::pvAccess::ChannelGet::shared_pointer const&,
+                                 epics::pvData::Structure::const_shared_pointer const& /*structure*/);
+  
+  virtual void getDone(const epics::pvData::Status& , 
+                       epics::pvAccess::ChannelGet::shared_pointer const& /*channelGet*/,
+                       epics::pvData::PVStructure::shared_pointer const &, 
+                       epics::pvData::BitSet::shared_pointer const&);
+  
+  epics::pvData::PVStructure::shared_pointer getPVStructure();
+
+  bool waitUntilGet(double);
+  
+};
+
+
+class GetFieldRequesterImpl : public epics::pvAccess::GetFieldRequester
+{
+ private:
+  epics::pvAccess::Channel::shared_pointer m_channel;
+  epics::pvData::FieldConstPtr m_field;
+  epics::pvData::Event m_event;
+  epics::pvData::Mutex m_pointerMutex;
+  
+ public:
+  
+  GetFieldRequesterImpl(epics::pvAccess::Channel::shared_pointer);
+  
+  virtual std::string getRequesterName();
+  virtual void message(std::string const &, epics::pvData::MessageType);
+  
+  virtual void getDone(const epics::pvData::Status&, epics::pvData::FieldConstPtr const &);
+  
+  epics::pvData::FieldConstPtr getField();
+  
+  bool waitUntilFieldGet(double);
+};
+
+/* struct dump_stack_only_on_debug */
+/* { */
+/*   const epics::pvData::Status &status; */
+/* dump_stack_only_on_debug(const epics::pvData::Status &s) : status(s) {} */
+/* }; */
 #endif //NEVENTREQUEST_H
