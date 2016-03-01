@@ -28,15 +28,18 @@ namespace epics { namespace nevent {
         EventProducer* prod;
     private:
         // EPICS Record TimeStamp
-        epics::pvData::PVTimeStamp pvTimeStamp;
-        epics::pvData::TimeStamp timeStamp;
+        /* epics::pvData::PVTimeStamp pvTimeStamp; */
+        /* epics::pvData::TimeStamp timeStamp; */
         // Access to the Record fields
+        epics::pvData::PVULongPtr eventTag;
         epics::pvData::PVULongPtr nCount;
         epics::pvData::PVLongArrayPtr nDetectorId;
         epics::pvData::PVIntArrayPtr nTimeStamp;
         // Other
-        unsigned int eventID = 0, oldID = 0;
-
+        unsigned int eventID = 0/* , oldID = 0 */;
+#ifdef DEBUG
+        unsigned int oldID = 0;        
+#endif
         neventDataRecord(const std::string &recordName, const epics::pvData::PVStructurePtr &pvStructure);
         bool init();
     };

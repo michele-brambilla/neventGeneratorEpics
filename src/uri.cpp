@@ -6,7 +6,9 @@ bool URI::parse(const std::string& uri, URI& result) {
   const std::string prot_end("://");
   std::string::const_iterator prot_i = search(uri.begin(), uri.end(),
                                               prot_end.begin(), prot_end.end());
-  if( prot_i == uri.end() || prot_i == uri.begin() )
+
+
+  if( prot_i == uri.end() || prot_i == uri.begin() )// throw "invalid protocol";
     return false;
 
   result.protocol.reserve(distance(uri.begin(), prot_i));
@@ -15,12 +17,12 @@ bool URI::parse(const std::string& uri, URI& result) {
             ::tolower); // protocol is icase
 
   advance(prot_i, prot_end.length());
-  if ( prot_i == uri.end() )
-    return false;
+  if ( prot_i == uri.end() ) //throw "invalid protocol";
+  return false;
 
   std::string::const_iterator path_i = find(prot_i, uri.end(), '/');
   result.host.assign(prot_i, path_i);
-
+  
   std::string::const_iterator fragment_i = find(path_i, uri.end(), '#');
   if ( fragment_i != uri.end() )
     result.fragment.assign(fragment_i+1, uri.end());

@@ -43,8 +43,8 @@ neventDataRecord::shared_pointer neventDataRecord::create(const std::string &rec
     
     epics::pvData::PVStructurePtr pvStructure = pvDataCreate->createPVStructure(
         fieldCreate->createFieldBuilder()->
-        add("timeStamp", standardField->timeStamp()) ->
         add("count", pvULong) ->
+        add("eventTag", pvULong) ->
         addArray("detectorId", pvLong)->
         addArray("nTimeStamp", pvInt)->
         createStructure()
@@ -67,11 +67,15 @@ neventDataRecord::neventDataRecord(const std::string &recordName, const epics::p
 
 bool neventDataRecord::init() {
   initPVRecord();
-  if (!pvTimeStamp.attach(getPVStructure()->getSubField("timeStamp")))
-    return false;
+  // if (!pvTimeStamp.attach(getPVStructure()->getSubField("timeStamp")))
+  //   return false;
     
   nCount = getPVStructure()->getSubField<PVULong>("count");
   if (nCount.get() == NULL)
+    return false;
+
+  eventTag = getPVStructure()->getSubField<PVULong>("eventTag");
+  if (eventTag.get() == NULL)
     return false;
     
   nDetectorId = getPVStructure()->getSubField<PVLongArray>("detectorId");
@@ -116,15 +120,16 @@ void neventDataRecord::update(char* filename) {
   std::copy(prod->ts(), prod->ts()+size, &ts_data[0]);
 
   beginGroupPut();
-  
+   
   nCount->put(size);
+  eventTag->put(eventID);
   nDetectorId->replace(freeze(id_data));
   nTimeStamp->replace(freeze(ts_data));
   
   // EPICS timestamp updated last
   // timeStamp.getCurrent();
   // pvTimeStamp.set(timeStamp);
-  pvTimeStamp.set(eventID);    // fills with "our" timestamp 
+  // pvTimeStamp.set(eventID);    // fills with "our" timestamp 
 
   endGroupPut();
   

@@ -103,11 +103,10 @@ class GetFieldRequesterImpl : public epics::pvAccess::GetFieldRequester
   epics::pvData::FieldConstPtr getField();
   
   bool waitUntilFieldGet(double);
+
 };
 
-/* struct dump_stack_only_on_debug */
-/* { */
-/*   const epics::pvData::Status &status; */
-/* dump_stack_only_on_debug(const epics::pvData::Status &s) : status(s) {} */
-/* }; */
+
+
+
 #endif //NEVENTREQUEST_H
