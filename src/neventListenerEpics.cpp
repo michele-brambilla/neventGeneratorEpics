@@ -7,10 +7,6 @@ using namespace std;
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-const int refresh_events = 140;
-
-
-
 int main (int argc, char *argv[]) {
 
   int nPvs = argc - optind;       /* Remaining arg list are PV names */
@@ -120,66 +116,63 @@ int main (int argc, char *argv[]) {
           }
         }
       }
-        
-      int oTag=0, cTag,count = 0, accum=0;
+
+
+      int oldPulseID = -1;
+      
+      std::vector<uint64_t> detectorID, timestamp;
+      
+      int pulseID = -1, pulseCount = 0;
+      uint64_t nCount;
+      
+      int statTime = time(NULL);
+
       while(true) {
-
         shared_ptr<ChannelGetRequesterImpl> getRequesterImpl(new ChannelGetRequesterImpl(channel->getChannelName()));
-        ChannelGet::shared_pointer channelGet = channel->createChannelGet(getRequesterImpl,
-                                                                          pvRequest);
-        allOK &= getRequesterImpl->waitUntilGet(timeOut);
+        while( oldPulseID == pulseID ) {
+          
+          
+          
+          
+          ChannelGet::shared_pointer channelGet = channel->createChannelGet(getRequesterImpl,
+                                                                            pvRequest);
+          allOK &= getRequesterImpl->waitUntilGet(timeOut);
+          
+        // do_something(channel,getRequesterImpl,pvRequest);
         
-
-        //        if(count %140 ==0) {
-
-        uint64_t nCount;
-        std::vector<uint64_t> detectorID, timestamp;
-
-        // do {
-        //   cTag = getULong(channel->getChannelName(),
-        //                   getRequesterImpl->getPVStructure(),"eventTag");
-        // } while (cTag == oTag);
-
-        
-        if( cTag != oTag ) {
-          count++;
-          accum += cTag - oTag;
           
-          nCount = getULong(channel->getChannelName(),
-                            getRequesterImpl->getPVStructure(),"count");
-          getArrayContent(channel->getChannelName(),
-                          getRequesterImpl->getPVStructure(),
-                          "detectorId", detectorID);
-          getArrayContent(channel->getChannelName(),
-                          getRequesterImpl->getPVStructure(),
-                          "nTimeStamp", detectorID);
-
-          // std::copy(detectorID.begin(),
-          //           detectorID.end(),
-          //           std::ostream_iterator<int>(std::cout,",")
-          //           );
-          // std::cout << "\n";
-          
-          oTag = cTag;
-
-          
-          
-          if(count % refresh_events == 0) {
-            oTag = cTag;
-            std::cout << "# neutrons = " << nCount << std::endl;
-            if(count / refresh_events > 1) {
-              std::cout << "Transferred " << 2*nCount*sizeof(uint64_t) * accum /(1024*1024) << " MByte" << std::endl;
-              std::cout << "Lost "        << refresh_events-accum << " messages" << std::endl;
-            }
-            
-            accum = 0;
-
-          }
-
+          pulseID = getULong(channel->getChannelName(),
+                             getRequesterImpl->getPVStructure(),
+                             "eventTag");
+          //          std::cout << oldPulseID << "\t" << pulseID << std::endl;
+                 
         }
-        
+        if(pulseID - oldPulseID > 1) {
+          printf("Missed pulse at pulseID %u\n", pulseID);
+        }
+        oldPulseID = pulseID;
+        nCount = getULong(channel->getChannelName(),
+                          getRequesterImpl->getPVStructure(),"count");
+        getArrayContent(channel->getChannelName(),
+                        getRequesterImpl->getPVStructure(),
+                        "detectorId", detectorID);
+        getArrayContent(channel->getChannelName(),
+                        getRequesterImpl->getPVStructure(),
+                        "nTimeStamp", detectorID);
 
-        
+        pulseCount++;
+    
+        if(time(NULL) >= statTime + 10) {
+      
+          printf("Received %f MB/sec , %f n* 10^6/sec, %u pulses\n", pulseCount*2*nCount*sizeof(uint64_t)/(1024.*1024.*10.), pulseCount*nCount/1.e6, pulseCount);
+  
+          pulseCount = 0;
+          nCount = 0;
+          statTime = time(NULL);
+      
+        }
+    
+            
       }
       
     }   

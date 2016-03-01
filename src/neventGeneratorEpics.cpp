@@ -54,6 +54,10 @@ int main(int argc,char *argv[]) {
   pull_event.detach();
 
   int pauseValue = (int)round(1000./frequency);
+
+  int pulseCount = 0;
+  int statTime = time(NULL);
+  
   while(true) {
     auto start = std::chrono::steady_clock::now();
     ned->update(argv[1]);         
@@ -61,6 +65,21 @@ int main(int argc,char *argv[]) {
     
     if( elapsed.count() < pauseValue)
       std::this_thread::sleep_for(std::chrono::milliseconds(pauseValue - elapsed.count()));
+
+    pulseCount++;
+    
+    if(time(NULL) >= statTime + 10) {
+      
+      printf("Sent %f MB/sec , %f n* 10^6/sec, %u pulses\n",
+             pulseCount*2*ned->prod->GetEventCount()*sizeof(uint64_t)/(1024.*1024.*10.),
+             pulseCount*ned->prod->GetEventCount()/1.e6,
+             pulseCount);
+      
+      pulseCount = 0;
+      statTime = time(NULL);
+      
+    }
+    
   }
 
 
