@@ -5,7 +5,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-
+#include <thread>         // std::this_thread::sleep_until
+#include <chrono>         // std::chrono::system_clock
+#include <ctime>          // std::time_t, std::tm, std::localtime, std::mktime
 
 #include <pv/serverContext.h>
 
@@ -53,18 +55,16 @@ int main(int argc,char *argv[]) {
   std::thread pull_event(keep_pulling, ned->prod);
   pull_event.detach();
 
-  int pauseValue = (int)round(1000./frequency);
+  int pauseValue = (int)round(1.e3/(frequency+1));
 
   int pulseCount = 0;
   int statTime = time(NULL);
   
   while(true) {
-    auto start = std::chrono::steady_clock::now();
-    ned->update(argv[1]);         
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
+
+    auto now = std::chrono::system_clock::now();
     
-    if( elapsed.count() < pauseValue)
-      std::this_thread::sleep_for(std::chrono::milliseconds(pauseValue - elapsed.count()));
+    ned->update(argv[1]);         
 
     pulseCount++;
     
@@ -79,6 +79,8 @@ int main(int argc,char *argv[]) {
       statTime = time(NULL);
       
     }
+
+    std::this_thread::sleep_until(now + std::chrono::milliseconds(pauseValue));
     
   }
 
