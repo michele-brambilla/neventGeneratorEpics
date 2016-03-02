@@ -8,7 +8,7 @@ using namespace std;
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
-static const double default_timeout = 0.1;
+static const double default_timeout = 3.0;
 
 #define DEFAULT_REQUEST "field(value)"
 #define DEFAULT_PROVIDER "pva"

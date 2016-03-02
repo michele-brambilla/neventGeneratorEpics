@@ -55,7 +55,7 @@ int main(int argc,char *argv[]) {
   std::thread pull_event(keep_pulling, ned->prod);
   pull_event.detach();
 
-  int pauseValue = (int)round(1.e3/(frequency+1));
+  int pauseValue = (int)round(1.e3/(frequency));
 
   int pulseCount = 0;
   int statTime = time(NULL);
