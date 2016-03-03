@@ -5,40 +5,55 @@
 #include <condition_variable> // std::condition_variable
 
 
-unsigned int getULong(std::string const & channelName,
-                      PVStructure::shared_pointer const & pv,
-                      const std::string& fieldname) {
+namespace utils {
   
-  PVField::shared_pointer v = pv->getSubField(fieldname);
-  if (v.get() == 0) {
-    std::cerr << "no " << fieldname << " field" << std::endl;
-    return 1;
-  }
+  unsigned int getULong(std::string const & channelName,
+                        PVStructure::shared_pointer const & pv,
+                        const std::string& fieldname) {
+  
+    PVField::shared_pointer v = pv->getSubField(fieldname);
+    if (v.get() == 0) {
+      std::cerr << "no " << fieldname << " field" << std::endl;
+      return 1;
+    }
     
-  return pv->getSubField<PVULong>(fieldname)->get();
-}
+    return pv->getSubField<PVULong>(fieldname)->get();
+  }
 
 
-std::vector<uint64_t>& getArrayContent(std::string const & channelName,
-             PVStructure::shared_pointer const & pv,
-             const std::string& field, std::vector<uint64_t>& container) {
+  // template<class T>
+  // T& getContent(std::string const & channelName,
+  //               PVField::shared_pointer const & pv,
+  //               const std::string& field,
+  //               T& container) {
+  //   return container;
+  // }
+
+
   
-  PVField::shared_pointer v = pv->getSubField(field);
-  if (v.get() == 0) {
-    std::cerr << "no " << field << " field" << std::endl;
+  std::vector<uint64_t>& getArrayContent(std::string const & channelName,
+                                         PVStructure::shared_pointer const & pv,
+                                         const std::string& field, std::vector<uint64_t>& container) {
+  
+    PVField::shared_pointer v = pv->getSubField(field);
+    if (v.get() == 0) {
+      std::cerr << "no " << field << " field" << std::endl;
+      return container;
+    }
+
+    PVScalarArray::shared_pointer a = pv->getSubField<PVScalarArray>(field);
+    shared_vector<const double> cvalues;
+    a->getAs(cvalues);
+
+    if( container.size() != a->getLength() ) {
+      container.resize(a->getLength());
+    }
+      
+    std::copy(cvalues.begin(), cvalues.end(), container.begin());
     return container;
   }
 
-  PVScalarArray::shared_pointer a = pv->getSubField<PVScalarArray>(field);
-  shared_vector<const double> cvalues;
-  a->getAs(cvalues);
-  container.resize(a->getLength());
- 
-  std::copy(cvalues.begin(), cvalues.end(), container.begin());
-  return container;
 }
-
-
 // void do_something(Channel::shared_pointer const & channel,
 //                   shared_ptr<ChannelGetRequesterImpl> const& getRequesterImpl,
 //                    PVStructure::shared_pointer const& pvRequest) {

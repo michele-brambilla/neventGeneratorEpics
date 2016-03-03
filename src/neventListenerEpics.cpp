@@ -1,14 +1,65 @@
 #include <iostream>
+#include <epicsThread.h>
 
 #include "neventRequest.h"
+#include "neventMonitor.h"
 #include "listenerUtils.h"
 
 using namespace std;
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
+const bool default_monitor = false;
+
+static const double default_timeout = 3.0;
+
+#define DEFAULT_REQUEST "field(value)"
+#define DEFAULT_PROVIDER "pva"
+
+double timeOut = default_timeout;
+string request(DEFAULT_REQUEST);
+string defaultProvider(DEFAULT_PROVIDER);
+const string noAddress;
+
+void usage() {
+  std::cout << "neventListenerEpics <opt> pv_list\n\n"
+            << " == <opt> ==\n"
+            << "-m : enable monitor (default false)\n"
+            << "-h : this help\n"
+            << std::endl;
+}
+
+
+
 int main (int argc, char *argv[]) {
 
+  int opt;
+  bool monitor = default_monitor;
+
+  if(monitor) {
+    request = "eventTag";
+  }
+  
+  while ((opt = getopt(argc, argv, ":hr:w:tmp:qdcF:f:ni")) != -1) {
+    switch (opt) {
+    case 'h':               /* Print usage */
+      usage();
+      return 0;
+    case 'r':               /* Set PVA timeout value */
+      request = optarg;
+      break;
+    case 'm':               /* Monitor mode */
+      monitor = true;
+      break;
+    default :
+      usage();
+      return 1;
+    }
+  }
+
+
+
+  
   int nPvs = argc - optind;       /* Remaining arg list are PV names */
   vector<string> pvs;     /* Array of PV structures */
 
@@ -118,62 +169,85 @@ int main (int argc, char *argv[]) {
       }
 
 
-      int oldPulseID = -1;
-      
       std::vector<uint64_t> detectorID, timestamp;
       
-      int pulseID = -1, pulseCount = 0;
+      uint64_t pulseID = 0;
       uint64_t nCount;
       
-      int statTime = time(NULL);
+      getStats stats(0,pulseID,nCount);                                
+      stats.start();
 
-      while(true) {
-        shared_ptr<ChannelGetRequesterImpl> getRequesterImpl(new ChannelGetRequesterImpl(channel->getChannelName()));
-        while( oldPulseID == pulseID ) {
-          
-          
-          
-          
-          ChannelGet::shared_pointer channelGet = channel->createChannelGet(getRequesterImpl,
-                                                                            pvRequest);
-          allOK &= getRequesterImpl->waitUntilGet(timeOut);
-          
-        // do_something(channel,getRequesterImpl,pvRequest);
+      if(!monitor) {
+
+        std::cout << "\t= getRequesterImpl poller =" << std::endl;
         
-          
-          pulseID = getULong(channel->getChannelName(),
-                             getRequesterImpl->getPVStructure(),
-                             "eventTag");
-          //          std::cout << oldPulseID << "\t" << pulseID << std::endl;
-                 
-        }
-        if(pulseID - oldPulseID > 1) {
-          printf("Missed pulse at pulseID %u\n", pulseID);
-        }
-        oldPulseID = pulseID;
-        nCount = getULong(channel->getChannelName(),
-                          getRequesterImpl->getPVStructure(),"count");
-        getArrayContent(channel->getChannelName(),
-                        getRequesterImpl->getPVStructure(),
-                        "detectorId", detectorID);
-        getArrayContent(channel->getChannelName(),
-                        getRequesterImpl->getPVStructure(),
-                        "nTimeStamp", detectorID);
-
-        pulseCount++;
-    
-        if(time(NULL) >= statTime + 10) {
-      
-          printf("Received %f MB/sec , %f n* 10^6/sec, %u pulses\n", pulseCount*2*nCount*sizeof(uint64_t)/(1024.*1024.*10.), pulseCount*nCount/1.e6, pulseCount);
-  
-          pulseCount = 0;
-          nCount = 0;
-          statTime = time(NULL);
-      
-        }
-    
+        while(true) {
+          shared_ptr<ChannelGetRequesterImpl> getRequesterImpl(new ChannelGetRequesterImpl(channel->getChannelName()));
+          while( stats.keepPolling() ) {
             
-      }
+            ChannelGet::shared_pointer channelGet = channel->createChannelGet(getRequesterImpl,
+                                                                              pvRequest);
+            allOK &= getRequesterImpl->waitUntilGet(timeOut);
+            pulseID = utils::getULong(channel->getChannelName(),
+                                      getRequesterImpl->getPVStructure(),
+                                      "eventTag");
+            //          std::cout << oldPulseID << "\t" << pulseID << std::endl;
+            
+          }
+
+          // getContent(channel->getChannelName(),
+          //            getRequesterImpl->getPVStructure(),"count", nCount);
+
+          nCount = utils::getULong(channel->getChannelName(),
+                            getRequesterImpl->getPVStructure(),"count");
+
+          
+          // getContent(channel->getChannelName(),
+          //            getRequesterImpl->getPVStructure(),
+          //            "detectorId",
+          //            detectorID);
+
+          // getContent(channel->getChannelName(),
+          //            getRequesterImpl->getPVStructure(),
+          //            "nTimeStamp",
+          //            timestamp);
+
+          utils::getArrayContent(channel->getChannelName(),
+                          getRequesterImpl->getPVStructure(),
+                          "detectorId", detectorID);
+          utils::getArrayContent(channel->getChannelName(),
+                          getRequesterImpl->getPVStructure(),
+                          "nTimeStamp", timestamp);
+
+          stats.stop();
+            
+        } // infinite loop
+
+      } // pulseID poll approach
+      else {
+
+        std::cout << "\t= monitor =" << std::endl;
+        
+        shared_ptr<ChannelRequesterImpl> channelRequesterImpl = dynamic_pointer_cast<ChannelRequesterImpl>(channel->getChannelRequester());
+        channelRequesterImpl->showDisconnectMessage();
+
+        shared_ptr<MonitorRequesterImpl> monitorRequesterImpl(new MonitorRequesterImpl(channel->getChannelName()));
+
+        //        std::cout << monitorRequesterImpl->getRequesterName() << std::endl;
+        
+        Monitor::shared_pointer monitorGet = channel->createMonitor(monitorRequesterImpl, pvRequest);
+        allOK &= true;
+
+        if (allOK && monitor)
+          {
+            while (true)
+              //epicsThreadSleep(timeOut);
+        allOK &= true;
+              
+          }
+        
+        
+      } // pulseID monitor approach
       
     }   
     
