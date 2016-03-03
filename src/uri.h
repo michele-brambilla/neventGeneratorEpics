@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <stdexcept>
 
 struct URI {
 public:

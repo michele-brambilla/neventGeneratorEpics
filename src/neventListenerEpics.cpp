@@ -13,7 +13,7 @@ const bool default_monitor = false;
 
 static const double default_timeout = 3.0;
 
-#define DEFAULT_REQUEST "field(value)"
+#define DEFAULT_REQUEST "eventTag"
 #define DEFAULT_PROVIDER "pva"
 
 double timeOut = default_timeout;
@@ -40,7 +40,7 @@ int main (int argc, char *argv[]) {
     request = "eventTag";
   }
   
-  while ((opt = getopt(argc, argv, ":hr:w:tmp:qdcF:f:ni")) != -1) {
+  while ((opt = getopt(argc, argv, ":hr:m")) != -1) {
     switch (opt) {
     case 'h':               /* Print usage */
       usage();
@@ -61,11 +61,16 @@ int main (int argc, char *argv[]) {
 
   
   int nPvs = argc - optind;       /* Remaining arg list are PV names */
+  if (nPvs < 1) {
+    throw std::runtime_error("pv name(s) required");
+  }
+
   vector<string> pvs;     /* Array of PV structures */
 
   // copy PV names from command line
   for (int n = 0; optind < argc; n++, optind++) {
     pvs.push_back(argv[optind]);
+    // std::cout << "pvs = " << pvs[n] << std::endl;          
   }
   
   std::cout << std::boolalpha;
@@ -74,11 +79,14 @@ int main (int argc, char *argv[]) {
   PVStructure::shared_pointer pvRequest;
   {
     //    Requester::shared_pointer requester(new RequesterImpl("neventListenerEpics"));
-    
-    pvRequest = CreateRequest::create()->createRequest(request);
+    try {
+      pvRequest = CreateRequest::create()->createRequest(request);
+    }
+    catch (std::bad_alloc& ba) {
+      std::cerr << "bad_alloc caught: " << ba.what() << '\n';
+    }
     if(pvRequest.get()==NULL) {
-      fprintf(stderr, "failed to parse request string\n");
-      return 1;
+      throw std::runtime_error("failed to parse " + request + " string\n");
     }
   }
   std::vector<std::string> pvNames;
@@ -93,10 +101,12 @@ int main (int argc, char *argv[]) {
     std::string pvName(pvs[n]);
     std::string address(noAddress);
     bool usingDefaultProvider = true;
+
     if (validURI) {
+      
       if (uri.path.length() <= 1) {
-        std::cerr << "invalid URI '" << pvs[n] << "', empty path" << std::endl;
-        return 1;
+        throw std::runtime_error("invalid URI '"+ pvName +"', empty path");
+        //        return 1;
       }
       providerName = uri.protocol;
       pvName = uri.path.substr(1);
@@ -105,11 +115,7 @@ int main (int argc, char *argv[]) {
     }
     
     if ((providerName != "pva") && (providerName != "ca")) {
-      std::cerr << "invalid "
-                << (usingDefaultProvider ? "default provider" : "URI scheme")
-                << " '" << providerName 
-                << "', only 'pva' and 'ca' are supported" << std::endl;
-      return -1;
+      throw std::runtime_error("invalid " + providerName + "', only 'pva' and 'ca' are supported");
     }
     pvNames.push_back(pvName);
     pvAddresses.push_back(address);
@@ -145,15 +151,15 @@ int main (int argc, char *argv[]) {
   for (int n = 0; n < nPvs; n++) {
     Channel::shared_pointer channel = channels[n];
     shared_ptr<ChannelRequesterImpl> channelRequesterImpl = dynamic_pointer_cast<ChannelRequesterImpl>(channel->getChannelRequester());
-      
+
     if (channelRequesterImpl->waitUntilConnected(timeOut)) {
       shared_ptr<GetFieldRequesterImpl> getFieldRequesterImpl;
-        
+      
       // probe for value field
       getFieldRequesterImpl.reset(new GetFieldRequesterImpl(channel));
       // get all to be immune to bad clients not supporting selective getField request
       channel->getField(getFieldRequesterImpl, "");
-        
+      
         
       if (getFieldRequesterImpl.get() == 0 ||
           getFieldRequesterImpl->waitUntilFieldGet(timeOut)) {
@@ -190,7 +196,7 @@ int main (int argc, char *argv[]) {
             allOK &= getRequesterImpl->waitUntilGet(timeOut);
             pulseID = utils::getULong(channel->getChannelName(),
                                       getRequesterImpl->getPVStructure(),
-                                      "eventTag");
+                                      request);
             //          std::cout << oldPulseID << "\t" << pulseID << std::endl;
             
           }

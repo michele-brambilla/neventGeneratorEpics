@@ -2,6 +2,7 @@
 #define _NEVENTREQUEST_H
 
 #include <iostream>
+#include <stdexcept>
 
 #include <epicsExport.h>
 #include <epicsExit.h>
