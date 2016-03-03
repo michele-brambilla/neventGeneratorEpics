@@ -10,10 +10,10 @@ SHRLIB_SEARCH_DIRS += /usr/local/lib $(EPICS_BASE)/lib/$(EPICS_HOST_ARCH) $(HOME
 
 LIBRARY += neventGenerator neventListener
 
-neventGenerator_SRCS += neventGeneratorRegister.cpp
+#neventGenerator_SRCS += neventGeneratorRegister.cpp
+neventGenerator_SRCS += neventStats.cpp
 neventGenerator_SRCS += neventDataRecord.cpp
-
-neventGenerator_SRCS += nevent.cpp
+#neventGenerator_SRCS += nevent.cpp
 neventGenerator_SRCS += event_producer.cpp
 neventGenerator_SRCS += neventArray.c
 neventGenerator_SRCS += nexus2event.c
@@ -26,12 +26,14 @@ neventGenerator_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 
 neventListener_SRCS += neventRequest.cpp
+neventListener_SRCS += neventMonitor.cpp
 neventListener_SRCS += uri.cpp
 neventListener_SRCS += listenerUtils.cpp
+neventListener_SRCS += neventStats.cpp
 
 
 PROD_HOST += neventGeneratorEpics neventListenerEpics
-neventGeneratorEpics_SRCS += neventGeneratorEpics.cpp neventArray.c nexus2event.c
+neventGeneratorEpics_SRCS += neventGeneratorEpics.cpp # neventArray.c nexus2event.c
 
 neventListenerEpics_SRCS += neventListenerEpics.cpp
 
